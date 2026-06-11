@@ -1,4 +1,5 @@
 import chromadb
+import uuid
 
 client = chromadb.PersistentClient(path="chroma_db")
 
@@ -13,7 +14,7 @@ def add_document(chunk: str, embedding, source: str):
         documents=[chunk],
         embeddings=[embedding],
         metadatas=[{"source": source}],
-        ids=[f"{source}_{hash(chunk)}"]
+        ids=[str(uuid.uuid4())]
     )
 
 
