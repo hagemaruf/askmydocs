@@ -17,6 +17,9 @@ chroma_db/
 # Uploads
 uploads/
 
+# Visual Studio
+.vs/
+
 # =========================
 # VS Code
 # =========================
