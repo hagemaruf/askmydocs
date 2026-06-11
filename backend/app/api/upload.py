@@ -4,6 +4,10 @@ import os
 
 from app.services.pdf_service import extract_text_from_pdf
 
+from app.rag.chunker import split_text
+from app.rag.embedding_service import create_embedding
+from app.rag.chroma_service import add_document
+
 router = APIRouter()
 
 UPLOAD_FOLDER = "uploads"
@@ -12,26 +16,36 @@ UPLOAD_FOLDER = "uploads"
 @router.post("/upload")
 async def upload_pdf(file: UploadFile = File(...)):
 
-    # Validasi file PDF
     if not file.filename.endswith(".pdf"):
         return {
             "error": "Only PDF files are allowed"
         }
 
-    # Buat folder uploads jika belum ada
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-    # Path file
     file_path = os.path.join(UPLOAD_FOLDER, file.filename)
 
-    # Simpan file
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Extract text
+    # Extract PDF text
     extracted_text = extract_text_from_pdf(file_path)
 
+    # Split text into chunks
+    chunks = split_text(extracted_text)
+
+    # Save chunks into ChromaDB
+    for chunk in chunks:
+
+        embedding = create_embedding(chunk)
+
+        add_document(
+            chunk=chunk,
+            embedding=embedding,
+            source=file.filename
+        )
+
     return {
-        "filename": file.filename,
-        "text_preview": extracted_text[:1000]
+        "message": "PDF processed successfully",
+        "chunks_saved": len(chunks)
     }
