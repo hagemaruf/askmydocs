@@ -1,0 +1,40 @@
+﻿@page "/chat"
+
+@using AskMyDocs.Web.Services
+
+@inject ApiService ApiService
+
+<h3>AskMyDocs AI Chat</h3>
+
+<div class="mb-3">
+
+    <input class="form-control"
+           @bind="Question"
+           placeholder="Ask something about your document..." />
+
+</div>
+
+<button class="btn btn-primary"
+        @onclick="SendQuestion">
+    Ask AI
+</button>
+
+<hr />
+
+<h5>Response:</h5>
+
+<pre>@Response</pre>
+
+@code {
+
+    private string Question = "";
+
+    private string Response = "";
+
+    private async Task SendQuestion()
+    {
+        Response = "Thinking...";
+
+        Response = await ApiService.AskQuestion(Question);
+    }
+}
