@@ -1,12 +1,16 @@
 import ollama
 
 
-def stream_answer(question: str, context: str):
+def stream_answer(
+    question: str,
+    context: str,
+    sources: list
+):
 
     prompt = f"""
 You are an AI assistant.
 
-Answer the user's question ONLY based on the provided context.
+Answer ONLY based on the provided context.
 
 Context:
 {context}
@@ -31,3 +35,9 @@ Question:
         content = chunk["message"]["content"]
 
         yield content
+
+    yield "\n\nSources:\n"
+
+    for source in sources:
+
+        yield f"- {source['source']} (page {source['page']})\n"

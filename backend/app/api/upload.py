@@ -1,51 +1,81 @@
 from fastapi import APIRouter, UploadFile, File
-import shutil
 import os
+import shutil
 
-from app.services.pdf_service import extract_text_from_pdf
-
+from app.services.pdf_service import extract_pages_from_pdf
 from app.rag.chunker import split_text
-from app.rag.embedding_service import create_embedding
-from app.rag.chroma_service import add_document
+from app.rag.embedding_service import create_embeddings
+from app.rag.chroma_service import add_documents
 
 router = APIRouter()
 
-UPLOAD_FOLDER = "uploads"
+UPLOAD_DIR = "uploads"
+
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 @router.post("/upload")
-async def upload_pdf(file: UploadFile = File(...)):
+async def upload_pdf(
+    file: UploadFile = File(...)
+):
 
-    if not file.filename.endswith(".pdf"):
-        return {
-            "error": "Only PDF files are allowed"
-        }
-
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-    file_path = os.path.join(UPLOAD_FOLDER, file.filename)
+    file_path = os.path.join(
+        UPLOAD_DIR,
+        file.filename
+    )
 
     with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
 
-    # Extract PDF text
-    extracted_text = extract_text_from_pdf(file_path)
-
-    # Split text into chunks
-    chunks = split_text(extracted_text)
-
-    # Save chunks into ChromaDB
-    for chunk in chunks:
-
-        embedding = create_embedding(chunk)
-
-        add_document(
-            chunk=chunk,
-            embedding=embedding,
-            source=file.filename
+        shutil.copyfileobj(
+            file.file,
+            buffer
         )
 
+    # Extract pages
+    pages = extract_pages_from_pdf(
+        file_path
+    )
+
+    all_chunks = []
+
+    all_embeddings = []
+
+    all_metadatas = []
+
+    # Process each page
+    for page_data in pages:
+
+        page_number = page_data["page"]
+
+        text = page_data["text"]
+
+        chunks = split_text(text)
+
+        embeddings = create_embeddings(chunks)
+
+        for i, chunk in enumerate(chunks):
+
+            all_chunks.append(chunk)
+
+            all_embeddings.append(
+                embeddings[i]
+            )
+
+            all_metadatas.append({
+                "source": file.filename,
+                "page": page_number,
+                "chunk": i
+            })
+
+    # Store in ChromaDB
+    add_documents(
+        all_chunks,
+        all_embeddings,
+        all_metadatas
+    )
+
     return {
-        "message": "PDF processed successfully",
-        "chunks_saved": len(chunks)
+        "message": "PDF uploaded successfully",
+        "filename": file.filename,
+        "chunks": len(all_chunks)
     }

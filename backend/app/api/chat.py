@@ -16,22 +16,43 @@ class ChatRequest(BaseModel):
 @router.post("/chat")
 async def chat(request: ChatRequest):
 
+    # Create embedding from user question
     query_embedding = create_embedding(
         request.question
     )
 
-    results = search_similar(query_embedding)
+    # Search similar chunks
+    results = search_similar(
+        query_embedding
+    )
 
+    # Retrieved documents
     documents = results["documents"][0]
 
+    # Retrieved metadata
+    metadatas = results["metadatas"][0]
+
+    # Combine chunks into context
     context = "\n\n".join(documents)
 
+    # Build source references
+    sources = []
+
+    for metadata in metadatas:
+
+        sources.append({
+            "source": metadata["source"],
+            "page": metadata["page"]
+        })
+
+    # Stream AI answer
     generator = stream_answer(
         question=request.question,
-        context=context
+        context=context,
+        sources=sources
     )
 
     return StreamingResponse(
         generator,
-        media_type="text/plain"
+        media_type="text/event-stream"
     )

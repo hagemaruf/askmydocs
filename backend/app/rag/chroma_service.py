@@ -1,28 +1,37 @@
 import chromadb
 import uuid
 
-client = chromadb.PersistentClient(path="chroma_db")
+client = chromadb.PersistentClient(
+    path="chroma_db"
+)
 
 collection = client.get_or_create_collection(
     name="documents"
 )
 
 
-def add_document(chunk: str, embedding, source: str):
+def add_documents(
+    chunks,
+    embeddings,
+    metadatas
+):
+
+    ids = [
+        str(uuid.uuid4())
+        for _ in chunks
+    ]
 
     collection.add(
-        documents=[chunk],
-        embeddings=[embedding],
-        metadatas=[{"source": source}],
-        ids=[str(uuid.uuid4())]
+        documents=chunks,
+        embeddings=embeddings,
+        metadatas=metadatas,
+        ids=ids
     )
 
 
-def search_similar(query_embedding, top_k=3):
+def search_similar(query_embedding):
 
-    results = collection.query(
+    return collection.query(
         query_embeddings=[query_embedding],
-        n_results=top_k
+        n_results=3
     )
-
-    return results

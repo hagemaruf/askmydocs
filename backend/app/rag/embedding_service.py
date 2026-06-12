@@ -9,3 +9,10 @@ def create_embedding(text: str):
     embedding = model.encode(text)
 
     return embedding.tolist()
+
+
+def create_embeddings(texts: list):
+
+    embeddings = model.encode(texts)
+
+    return embeddings.tolist()
