@@ -1,7 +1,7 @@
 import ollama
 
 
-def generate_answer(question: str, context: str):
+def stream_answer(question: str, context: str):
 
     prompt = f"""
 You are an AI assistant.
@@ -15,16 +15,19 @@ Question:
 {question}
 """
 
-    response = ollama.chat(
+    stream = ollama.chat(
         model="llama3.2",
         messages=[
             {
                 "role": "user",
                 "content": prompt
             }
-        ]
+        ],
+        stream=True
     )
 
-    answer = response["message"]["content"]
+    for chunk in stream:
 
-    return answer
+        content = chunk["message"]["content"]
+
+        yield content
