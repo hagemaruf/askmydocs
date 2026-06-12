@@ -5,11 +5,39 @@
 @using Markdig
 @using Microsoft.AspNetCore.Components
 @using Blazored.LocalStorage
+@using Microsoft.AspNetCore.Components.Forms
 
 @inject ApiService ApiService
 @inject ILocalStorageService LocalStorage
+@inject UploadService UploadService
 
 <h3 class="mb-4">AskMyDocs AI</h3>
+
+<div class="card mb-3 p-3">
+
+    <h5>Upload PDF</h5>
+
+    <InputFile OnChange="HandleFileUpload"
+               accept=".pdf" />
+
+    @if (IsUploading)
+    {
+        <p class="mt-2">
+            Uploading and processing PDF...
+        </p>
+    }
+
+    @if (!string.IsNullOrEmpty(
+        UploadMessage))
+    {
+        <div class="alert alert-info mt-2">
+
+            @UploadMessage
+
+        </div>
+    }
+
+</div>
 
 <div class="chat-container">
 
@@ -64,6 +92,10 @@
     private bool IsLoading = false;
 
     private List<ChatMessage> Messages = new();
+
+    private bool IsUploading = false;
+
+    private string UploadMessage = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -141,5 +173,42 @@
             });
 
         IsLoading = false;
+    }
+
+    private async Task HandleFileUpload(
+    InputFileChangeEventArgs e)
+    {
+        try
+        {
+            IsUploading = true;
+
+            UploadMessage = "";
+
+            var file = e.File;
+
+            var success =
+                await UploadService
+                    .UploadPdf(file);
+
+            if (success)
+            {
+                UploadMessage =
+                    "PDF uploaded successfully!";
+            }
+            else
+            {
+                UploadMessage =
+                    "Upload failed.";
+            }
+        }
+        catch (Exception ex)
+        {
+            UploadMessage =
+                $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsUploading = false;
+        }
     }
 }
