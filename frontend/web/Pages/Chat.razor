@@ -4,8 +4,10 @@
 @using AskMyDocs.Web.Models
 @using Markdig
 @using Microsoft.AspNetCore.Components
+@using Blazored.LocalStorage
 
 @inject ApiService ApiService
+@inject ILocalStorageService LocalStorage
 
 <h3 class="mb-4">AskMyDocs AI</h3>
 
@@ -34,13 +36,24 @@
            @bind:event="oninput"
            placeholder="Ask something about your documents..." />
 
-    <button class="btn btn-primary mt-2"
-            @onclick="SendQuestion"
-            disabled="@IsLoading">
+    <div class="mt-2">
 
-        @(IsLoading ? "Thinking..." : "Send")
+        <button class="btn btn-primary"
+                @onclick="SendQuestion"
+                disabled="@IsLoading">
 
-    </button>
+            @(IsLoading ? "Thinking..." : "Send")
+
+        </button>
+
+        <button class="btn btn-danger ms-2"
+                @onclick="ClearChat">
+
+            Clear Chat
+
+        </button>
+
+    </div>
 
 </div>
 
@@ -51,6 +64,36 @@
     private bool IsLoading = false;
 
     private List<ChatMessage> Messages = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var savedMessages =
+            await LocalStorage.GetItemAsync
+            <List<ChatMessage>>(
+                "chat_history");
+
+        if (savedMessages != null)
+        {
+            Messages = savedMessages;
+        }
+    }
+
+    private async Task SaveChat()
+    {
+        await LocalStorage.SetItemAsync(
+            "chat_history",
+            Messages);
+    }
+
+    private async Task ClearChat()
+    {
+        Messages.Clear();
+
+        await LocalStorage.RemoveItemAsync(
+            "chat_history");
+
+        StateHasChanged();
+    }
 
     private async Task SendQuestion()
     {
@@ -66,7 +109,9 @@
             Content = Question
         });
 
-        // Add empty AI message
+        await SaveChat();
+
+        // Create empty AI message
         var aiMessage = new ChatMessage
         {
             Role = "assistant",
@@ -85,11 +130,14 @@
         await ApiService.StreamQuestion(
             currentQuestion,
             Messages,
-            chunk =>
+            async chunk =>
             {
                 aiMessage.Content += chunk;
 
-                InvokeAsync(StateHasChanged);
+                await SaveChat();
+
+                await InvokeAsync(
+                    StateHasChanged);
             });
 
         IsLoading = false;

@@ -42,12 +42,23 @@ async def chat(request: ChatRequest):
     # Build source references
     sources = []
 
+    seen = set()
+
     for metadata in metadatas:
 
-        sources.append({
-            "source": metadata["source"],
-            "page": metadata["page"]
-        })
+        key = (
+            metadata["source"],
+            metadata["page"]
+        )
+
+        if key not in seen:
+
+            seen.add(key)
+
+            sources.append({
+                "source": metadata["source"],
+                "page": metadata["page"]
+            })
 
     # Stream AI answer
     generator = stream_answer(
