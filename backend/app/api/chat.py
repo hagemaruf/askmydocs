@@ -11,7 +11,11 @@ router = APIRouter()
 
 class ChatRequest(BaseModel):
     question: str
+    history: list[Message] = []
 
+class Message(BaseModel):
+    role: str
+    content: str
 
 @router.post("/chat")
 async def chat(request: ChatRequest):
@@ -49,7 +53,8 @@ async def chat(request: ChatRequest):
     generator = stream_answer(
         question=request.question,
         context=context,
-        sources=sources
+        sources=sources,
+        history=request.history
     )
 
     return StreamingResponse(

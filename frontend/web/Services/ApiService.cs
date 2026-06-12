@@ -1,6 +1,7 @@
 ﻿using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using AskMyDocs.Web.Models;
 
 namespace AskMyDocs.Web.Services;
 
@@ -14,19 +15,29 @@ public class ApiService
     }
 
     public async Task StreamQuestion(
-        string question,
-        Action<string> onChunk)
+    string question,
+    List<ChatMessage> history,
+    Action<string> onChunk)
     {
-        var json = $$"""
+        var payload = new
         {
-            "question": "{{question}}"
-        }
-        """;
+            question = question,
+            history = history
+        };
+
+        var json = JsonSerializer.Serialize(
+            payload,
+            new JsonSerializerOptions
+            {
+                PropertyNamingPolicy =
+                    JsonNamingPolicy.CamelCase
+            });
 
         var content = new StringContent(
             json,
             Encoding.UTF8,
             "application/json");
+
         var request = new HttpRequestMessage(
             HttpMethod.Post,
             "http://127.0.0.1:8000/chat");
@@ -37,7 +48,8 @@ public class ApiService
             request,
             HttpCompletionOption.ResponseHeadersRead);
 
-        using var stream = await response.Content.ReadAsStreamAsync();
+        using var stream =
+            await response.Content.ReadAsStreamAsync();
 
         byte[] buffer = new byte[128];
 

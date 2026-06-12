@@ -4,29 +4,43 @@ import ollama
 def stream_answer(
     question: str,
     context: str,
-    sources: list
+    sources: list,
+    history: list
 ):
 
-    prompt = f"""
+    messages = []
+
+    system_prompt = f"""
 You are an AI assistant.
 
-Answer ONLY based on the provided context.
+Answer ONLY using the provided context.
 
 Context:
 {context}
-
-Question:
-{question}
 """
+
+    messages.append({
+        "role": "system",
+        "content": system_prompt
+    })
+
+    # Add conversation history
+    for message in history:
+
+        messages.append({
+            "role": message.role,
+            "content": message.content
+        })
+
+    # Add current question
+    messages.append({
+        "role": "user",
+        "content": question
+    })
 
     stream = ollama.chat(
         model="llama3.2",
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
+        messages=messages,
         stream=True
     )
 

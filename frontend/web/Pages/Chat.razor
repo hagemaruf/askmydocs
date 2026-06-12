@@ -84,6 +84,7 @@
         // Stream AI response
         await ApiService.StreamQuestion(
             currentQuestion,
+            Messages,
             chunk =>
             {
                 aiMessage.Content += chunk;
