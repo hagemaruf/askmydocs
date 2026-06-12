@@ -1,47 +1,96 @@
 ﻿@page "/chat"
 
 @using AskMyDocs.Web.Services
+@using AskMyDocs.Web.Models
+@using Markdig
+@using Microsoft.AspNetCore.Components
 
 @inject ApiService ApiService
 
-<h3>AskMyDocs AI Chat</h3>
+<h3 class="mb-4">AskMyDocs AI</h3>
 
-<div class="mb-3">
+<div class="chat-container">
 
-    <input class="form-control"
-           @bind="Question"
-           placeholder="Ask something..." />
+    @foreach (var message in Messages)
+    {
+        <div class="message-wrapper @(message.Role)">
+
+            <div class="message-bubble @(message.Role)">
+
+                @((MarkupString)Markdown.ToHtml(
+                    message.Content))
+
+            </div>
+
+        </div>
+    }
 
 </div>
 
-<button class="btn btn-primary"
-        @onclick="SendQuestion">
-    Ask AI
-</button>
+<div class="input-container">
 
-<hr />
+    <input class="form-control"
+           @bind="Question"
+           @bind:event="oninput"
+           placeholder="Ask something about your documents..." />
 
-<div style="white-space: pre-wrap;">
-    @Response
+    <button class="btn btn-primary mt-2"
+            @onclick="SendQuestion"
+            disabled="@IsLoading">
+
+        @(IsLoading ? "Thinking..." : "Send")
+
+    </button>
+
 </div>
 
 @code {
 
     private string Question = "";
 
-    private string Response = "";
+    private bool IsLoading = false;
+
+    private List<ChatMessage> Messages = new();
 
     private async Task SendQuestion()
     {
-        Response = "";
+        if (string.IsNullOrWhiteSpace(Question))
+            return;
 
+        IsLoading = true;
+
+        // Add user message
+        Messages.Add(new ChatMessage
+        {
+            Role = "user",
+            Content = Question
+        });
+
+        // Add empty AI message
+        var aiMessage = new ChatMessage
+        {
+            Role = "assistant",
+            Content = ""
+        };
+
+        Messages.Add(aiMessage);
+
+        var currentQuestion = Question;
+
+        Question = "";
+
+        StateHasChanged();
+
+        // Stream AI response
         await ApiService.StreamQuestion(
-            Question,
+            currentQuestion,
             chunk =>
             {
-                Response += chunk;
+                aiMessage.Content += chunk;
 
                 InvokeAsync(StateHasChanged);
             });
+
+        IsLoading = false;
     }
 }
