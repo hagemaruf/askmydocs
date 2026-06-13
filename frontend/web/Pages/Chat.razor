@@ -3,83 +3,128 @@
 @using AskMyDocs.Web.Services
 @using AskMyDocs.Web.Models
 @using Markdig
-@using Microsoft.AspNetCore.Components
-@using Blazored.LocalStorage
 @using Microsoft.AspNetCore.Components.Forms
+@using Blazored.LocalStorage
 
 @inject ApiService ApiService
-@inject ILocalStorageService LocalStorage
 @inject UploadService UploadService
+@inject ILocalStorageService LocalStorage
 
-<h3 class="mb-4">AskMyDocs AI</h3>
+<div class="app-layout">
 
-<div class="card mb-3 p-3">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
 
-    <h5>Upload PDF</h5>
+        <button class="btn btn-primary w-100 mb-3"
+                @onclick="CreateNewChat">
 
-    <InputFile OnChange="HandleFileUpload"
-               accept=".pdf" />
+            + New Chat
 
-    @if (IsUploading)
-    {
-        <p class="mt-2">
-            Uploading and processing PDF...
-        </p>
-    }
+        </button>
 
-    @if (!string.IsNullOrEmpty(
-        UploadMessage))
-    {
-        <div class="alert alert-info mt-2">
+        @foreach (var conversation in Conversations)
+        {
+            <div class="conversation-item
+                @(conversation == CurrentConversation
+                     ? "active"
+                     : "")"
 
-            @UploadMessage
+                 @onclick="() => SelectConversation(conversation)">
+
+                @conversation.Title
+
+            </div>
+
+            <button class="btn btn-sm btn-danger"
+                    @onclick="() => DeleteConversation(conversation)">
+
+                X
+
+            </button>
+        }
+
+    </div>
+
+    <!-- CHAT AREA -->
+    <div class="chat-area">
+
+        <h3 class="mb-3">
+            AskMyDocs AI
+        </h3>
+
+        <!-- UPLOAD -->
+        <div class="card mb-3 p-3">
+
+            <h5>Upload PDF</h5>
+
+            <InputFile OnChange="HandleFileUpload"
+                       accept=".pdf" />
+
+            @if (IsUploading)
+            {
+                <p class="mt-2">
+                    Uploading and processing PDF...
+                </p>
+            }
+
+            @if (!string.IsNullOrEmpty(UploadMessage))
+            {
+                <div class="alert alert-info mt-2">
+
+                    @UploadMessage
+
+                </div>
+            }
 
         </div>
-    }
 
-</div>
+        <!-- CHAT -->
+        <div class="chat-container">
 
-<div class="chat-container">
+            @if (CurrentConversation != null)
+            {
+                @foreach (var message
+                    in CurrentConversation.Messages)
+                {
+                    <div class="message-wrapper @(message.Role)">
 
-    @foreach (var message in Messages)
-    {
-        <div class="message-wrapper @(message.Role)">
+                        <div class="message-bubble @(message.Role)">
 
-            <div class="message-bubble @(message.Role)">
+                            @((MarkupString)
+                                Markdown.ToHtml(
+                                    message.Content))
 
-                @((MarkupString)Markdown.ToHtml(
-                    message.Content))
+                        </div>
+
+                    </div>
+                }
+            }
+
+        </div>
+
+        <!-- INPUT -->
+        <div class="input-container">
+
+            <input class="form-control"
+                   @bind="Question"
+                   @bind:event="oninput"
+                   placeholder="Ask something about your documents..." />
+
+            <div class="mt-2">
+
+                <button class="btn btn-primary"
+                        @onclick="SendQuestion"
+                        disabled="@IsLoading">
+
+                    @(IsLoading
+                        ? "Thinking..."
+                        : "Send")
+
+                </button>
 
             </div>
 
         </div>
-    }
-
-</div>
-
-<div class="input-container">
-
-    <input class="form-control"
-           @bind="Question"
-           @bind:event="oninput"
-           placeholder="Ask something about your documents..." />
-
-    <div class="mt-2">
-
-        <button class="btn btn-primary"
-                @onclick="SendQuestion"
-                disabled="@IsLoading">
-
-            @(IsLoading ? "Thinking..." : "Send")
-
-        </button>
-
-        <button class="btn btn-danger ms-2"
-                @onclick="ClearChat">
-
-            Clear Chat
-
-        </button>
 
     </div>
 
@@ -91,92 +136,90 @@
 
     private bool IsLoading = false;
 
-    private List<ChatMessage> Messages = new();
-
     private bool IsUploading = false;
 
     private string UploadMessage = "";
 
-    protected override async Task OnInitializedAsync()
-    {
-        var savedMessages =
-            await LocalStorage.GetItemAsync
-            <List<ChatMessage>>(
-                "chat_history");
+    private List<Conversation>
+        Conversations = new();
 
-        if (savedMessages != null)
+    private Conversation?
+        CurrentConversation;
+
+    protected override async Task
+        OnInitializedAsync()
+    {
+        Conversations =
+            await LocalStorage
+                .GetItemAsync
+                <List<Conversation>>(
+                    "conversations")
+            ?? new();
+
+        if (Conversations.Any())
         {
-            Messages = savedMessages;
+            CurrentConversation =
+                Conversations.First();
+        }
+        else
+        {
+            await CreateNewChat();
         }
     }
 
-    private async Task SaveChat()
+    private async Task CreateNewChat()
     {
-        await LocalStorage.SetItemAsync(
-            "chat_history",
-            Messages);
-    }
-
-    private async Task ClearChat()
-    {
-        Messages.Clear();
-
-        await LocalStorage.RemoveItemAsync(
-            "chat_history");
-
-        StateHasChanged();
-    }
-
-    private async Task SendQuestion()
-    {
-        if (string.IsNullOrWhiteSpace(Question))
-            return;
-
-        IsLoading = true;
-
-        // Add user message
-        Messages.Add(new ChatMessage
-        {
-            Role = "user",
-            Content = Question
-        });
-
-        await SaveChat();
-
-        // Create empty AI message
-        var aiMessage = new ChatMessage
-        {
-            Role = "assistant",
-            Content = ""
-        };
-
-        Messages.Add(aiMessage);
-
-        var currentQuestion = Question;
-
-        Question = "";
-
-        StateHasChanged();
-
-        // Stream AI response
-        await ApiService.StreamQuestion(
-            currentQuestion,
-            Messages,
-            async chunk =>
+        var conversation =
+            new Conversation
             {
-                aiMessage.Content += chunk;
+                Title =
+                    $"Chat {Conversations.Count + 1}"
+            };
 
-                await SaveChat();
+        Conversations.Add(conversation);
 
-                await InvokeAsync(
-                    StateHasChanged);
-            });
+        CurrentConversation =
+            conversation;
 
-        IsLoading = false;
+        await SaveConversations();
+    }
+
+    private void SelectConversation(
+        Conversation conversation)
+    {
+        CurrentConversation =
+            conversation;
+    }
+
+    private async Task SaveConversations()
+    {
+        await LocalStorage
+            .SetItemAsync(
+                "conversations",
+                Conversations);
+    }
+
+    private async Task DeleteConversation(
+    Conversation conversation)
+    {
+        Conversations.Remove(conversation);
+
+        if (CurrentConversation == conversation)
+        {
+            CurrentConversation =
+                Conversations.FirstOrDefault();
+        }
+
+        if (!Conversations.Any())
+        {
+            await CreateNewChat();
+        }
+
+        await SaveConversations();
     }
 
     private async Task HandleFileUpload(
-    InputFileChangeEventArgs e)
+        InputFileChangeEventArgs e)
     {
         try
         {
@@ -210,5 +253,87 @@
         {
             IsUploading = false;
         }
+    }
+
+    private string GenerateConversationTitle(
+    string question)
+    {
+        if (string.IsNullOrWhiteSpace(
+            question))
+        {
+            return "New Chat";
+        }
+
+        question = question.Trim();
+
+        if (question.Length > 35)
+        {
+            question =
+                question.Substring(0, 35)
+                + "...";
+        }
+
+        return question;
+    }
+
+    private async Task SendQuestion()
+    {
+        if (string.IsNullOrWhiteSpace(
+            Question))
+            return;
+
+        if (CurrentConversation == null)
+            return;
+
+        IsLoading = true;
+
+        CurrentConversation.Messages.Add(
+            new ChatMessage
+            {
+                Role = "user",
+                Content = Question
+            });
+
+        var aiMessage =
+            new ChatMessage
+            {
+                Role = "assistant",
+                Content = ""
+            };
+
+        CurrentConversation.Messages
+            .Add(aiMessage);
+
+        var currentQuestion =
+            Question;
+
+        if (CurrentConversation != null
+    && CurrentConversation.Messages.Count <= 2)
+        {
+            CurrentConversation.Title =
+                GenerateConversationTitle(
+                    currentQuestion);
+        }
+
+        Question = "";
+
+        await SaveConversations();
+
+        StateHasChanged();
+
+        await ApiService.StreamQuestion(
+            currentQuestion,
+            CurrentConversation.Messages,
+            async chunk =>
+            {
+                aiMessage.Content += chunk;
+
+                await SaveConversations();
+
+                await InvokeAsync(
+                    StateHasChanged);
+            });
+
+        IsLoading = false;
     }
 }
