@@ -1,7 +1,8 @@
-﻿using System.Net.Http.Json;
+﻿using AskMyDocs.Web.Models;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using AskMyDocs.Web.Models;
+using static System.Net.WebRequestMethods;
 
 namespace AskMyDocs.Web.Services;
 
@@ -91,5 +92,24 @@ public class ApiService
             .GetString();
 
         return answer ?? "";
+    }
+
+    public async Task<string> GenerateTitle(string question)
+    {
+        var response =
+            await _httpClient.PostAsJsonAsync(
+                "http://127.0.0.1:8000/generate-title",
+                new
+                {
+                    question = question
+                });
+
+        var result =
+            await response.Content
+                .ReadFromJsonAsync
+                <TitleResponse>();
+
+        return result?.Title
+            ?? "New Chat";
     }
 }

@@ -307,12 +307,17 @@
         var currentQuestion =
             Question;
 
-        if (CurrentConversation != null
-    && CurrentConversation.Messages.Count <= 2)
+        if (CurrentConversation != null && CurrentConversation.Messages.Count <= 2)
         {
+            var aiTitle =
+                await ApiService
+                    .GenerateTitle(
+                        currentQuestion);
+
             CurrentConversation.Title =
-                GenerateConversationTitle(
-                    currentQuestion);
+                aiTitle;
+
+            await SaveConversations();
         }
 
         Question = "";
