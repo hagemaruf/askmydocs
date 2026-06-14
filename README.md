@@ -6,20 +6,106 @@ AskMyDocs allows users to upload PDF documents and ask questions about their con
 
 ---
 
-# Features
+## Docker Support
 
-- PDF upload & text extraction
-- Semantic chunking
-- Vector embeddings with SentenceTransformers
-- ChromaDB vector database
-- Local LLM integration with Ollama
-- Streaming AI responses
-- Conversational memory
-- Page-aware source citations
-- Persistent chat history
-- ChatGPT-style UI
-- Blazor WebAssembly frontend
-- FastAPI backend
+AskMyDocs is fully containerized using Docker and Docker Compose.
+
+### Architecture
+
+* Frontend: Blazor WebAssembly + Nginx
+* Backend: FastAPI + Uvicorn
+* AI Model: Ollama Local LLM
+* Vector Database: ChromaDB
+
+---
+
+## Run with Docker
+
+### Prerequisites
+
+Install:
+
+* Docker Desktop
+* Ollama
+
+Pull the required Ollama models:
+
+```bash
+ollama pull llama3.2
+```
+
+---
+
+## Start the Application
+
+```bash
+docker compose up --build
+```
+
+---
+
+## Access URLs
+
+Frontend:
+
+```text
+http://localhost:8080
+```
+
+Backend API:
+
+```text
+http://localhost:8000
+```
+
+Swagger Docs:
+
+```text
+http://localhost:8000/docs
+```
+
+---
+
+## Features
+
+* PDF Upload
+* Semantic Search
+* Retrieval-Augmented Generation (RAG)
+* Local AI Inference
+* Streaming Chat Responses
+* Conversation Memory
+* Source Citation
+* Automatic Chat Titles
+* Dockerized Deployment
+
+---
+
+## Tech Stack
+
+### Frontend
+
+* Blazor WebAssembly
+* C#
+* LocalStorage
+
+### Backend
+
+* FastAPI
+* Python
+* Ollama
+* ChromaDB
+
+### AI / RAG
+
+* Llama 3.2
+* Semantic Search
+* Vector Database
+
+### DevOps
+
+* Docker
+* Docker Compose
+* Nginx
 
 ---
 ## Sample Documents
