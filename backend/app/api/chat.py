@@ -8,14 +8,13 @@ from app.services.llm_service import stream_answer
 
 router = APIRouter()
 
+class Message(BaseModel):
+    role: str
+    content: str
 
 class ChatRequest(BaseModel):
     question: str
     history: list[Message] = []
-
-class Message(BaseModel):
-    role: str
-    content: str
 
 @router.post("/chat")
 async def chat(request: ChatRequest):

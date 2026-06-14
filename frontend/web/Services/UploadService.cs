@@ -37,7 +37,7 @@ public class UploadService
 
         var response =
             await _http.PostAsync(
-                "http://127.0.0.1:8000/upload",
+                "http://localhost:8000/upload",
                 content);
 
         return response.IsSuccessStatusCode;

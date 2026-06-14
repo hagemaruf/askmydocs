@@ -1,6 +1,9 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-import ollama
+from ollama import Client
+from app.config import OLLAMA_HOST
+
+client = Client(host=OLLAMA_HOST)
 
 router = APIRouter()
 
@@ -26,7 +29,7 @@ Rules:
 - professional
 """
 
-    response = ollama.chat(
+    response = client.chat(
         model="llama3.2",
         messages=[
             {

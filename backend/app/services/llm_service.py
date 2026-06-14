@@ -1,5 +1,7 @@
-import ollama
+from ollama import Client
+from app.config import OLLAMA_HOST
 
+client = Client(host=OLLAMA_HOST)
 
 def stream_answer(
     question: str,
@@ -38,7 +40,7 @@ Context:
         "content": question
     })
 
-    stream = ollama.chat(
+    stream = client.chat(
         model="llama3.2",
         messages=messages,
         stream=True

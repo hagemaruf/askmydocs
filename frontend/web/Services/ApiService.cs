@@ -41,7 +41,7 @@ public class ApiService
 
         var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "http://127.0.0.1:8000/chat");
+            "http://localhost:8000/chat");
 
         request.Content = content;
 
@@ -77,7 +77,7 @@ public class ApiService
     public async Task<string> AskQuestion(string question)
     {
         var response = await _httpClient.PostAsJsonAsync(
-            "http://127.0.0.1:8000/chat",
+            "http://localhost:8000/chat",
             new
             {
                 question = question
@@ -98,7 +98,7 @@ public class ApiService
     {
         var response =
             await _httpClient.PostAsJsonAsync(
-                "http://127.0.0.1:8000/generate-title",
+                "http://localhost:8000/generate-title",
                 new
                 {
                     question = question
