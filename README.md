@@ -5,10 +5,41 @@ AI-powered document assistant built with RAG (Retrieval-Augmented Generation), l
 AskMyDocs allows users to upload PDF documents and ask questions about their content using semantic search and conversational AI.
 
 ---
+# Screenshots
 
-## Docker Support
+## Upload Interface
+![AskMyDocs Upload](docs/screenshots/upload.png)
 
-AskMyDocs is fully containerized using Docker and Docker Compose.
+## Chat Interface
+![AskMyDocs Chat](docs/screenshots/chat.png)
+
+## Chunk preview Interface
+![AskMyDocs Chat](docs/screenshots/chunk.png)
+
+---
+
+## Diagram
++--------------------+
+|   Blazor WASM UI   |
++---------+----------+
+          |
+          v
++--------------------+
+|      FastAPI       |
++---------+----------+
+          |
+          +-------------------+
+          |                   |
+          v                   v
++----------------+   +----------------+
+| SentenceTrans. |   |     Ollama     |
+|   Embeddings   |   |    Llama 3.2   |
++--------+-------+   +--------+-------+
+         |                    |
+         v                    |
++----------------+            |
+|    ChromaDB    |<-----------+
++----------------+
 
 ### Architecture
 
@@ -18,6 +49,24 @@ AskMyDocs is fully containerized using Docker and Docker Compose.
 * Vector Database: ChromaDB
 
 ---
+
+## Features
+
+* PDF Upload
+* Semantic Search
+* Retrieval-Augmented Generation (RAG)
+* Local AI Inference
+* Streaming Chat Responses
+* Conversation Memory
+* Source Citation
+* Automatic Chat Titles
+* Dockerized Deployment
+
+---
+
+## Docker Support
+
+AskMyDocs is fully containerized using Docker and Docker Compose.
 
 ## Run with Docker
 
@@ -66,20 +115,6 @@ http://localhost:8000/docs
 
 ---
 
-## Features
-
-* PDF Upload
-* Semantic Search
-* Retrieval-Augmented Generation (RAG)
-* Local AI Inference
-* Streaming Chat Responses
-* Conversation Memory
-* Source Citation
-* Automatic Chat Titles
-* Dockerized Deployment
-
----
-
 ## Tech Stack
 
 ### Frontend
@@ -114,11 +149,3 @@ Sample PDFs for testing are available in:
 
 docs/sample-pdfs/
 
-----
-# Screenshots
-
-## Upload Interface
-![AskMyDocs Upload](docs/screenshots/upload.png)
-
-## Chat Interface
-![AskMyDocs Chat](docs/screenshots/chat.png)
