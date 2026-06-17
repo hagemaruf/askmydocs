@@ -30,8 +30,6 @@ flowchart TD
     B --> E[Ollama Llama 3.2]
 
     D --> B
-    B --> E
-    E --> A
 ```
 
 ### Architecture
