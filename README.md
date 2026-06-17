@@ -22,14 +22,30 @@ AskMyDocs allows users to upload PDF documents and ask questions about their con
 ```mermaid
 flowchart TD
 
-    A[Blazor WebAssembly] --> B[FastAPI Backend]
+    A[Upload PDF]
+    B[Chunking]
+    C[SentenceTransformers Embeddings]
+    D[ChromaDB Vector Store]
 
-    B --> C[SentenceTransformers]
-    C --> D[ChromaDB]
+    E[User Question]
+    F[Semantic Search]
+    G[Relevant Chunks Retrieved]
 
-    B --> E[Ollama Llama 3.2]
+    H[Ollama - Llama 3.2]
+    I[Answer with Citations]
 
-    D --> B
+    A --> B
+    B --> C
+    C --> D
+
+    E --> F
+    F --> D
+    D --> G
+
+    G --> H
+    E --> H
+
+    H --> I
 ```
 
 ### Architecture
