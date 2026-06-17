@@ -1,0 +1,211 @@
+﻿@page "/documents"
+
+@using AskMyDocs.Web.Services
+@using AskMyDocs.Web.Models
+@using Markdig
+@using Microsoft.AspNetCore.Components.Forms
+@using Blazored.LocalStorage
+
+@inject ApiService ApiService
+@inject UploadService UploadService
+@inject ILocalStorageService LocalStorage
+
+<div class="app-layout">
+
+    <!-- CHAT AREA -->
+    <div class="chat-area">
+
+        <h3 class="mb-3">
+            Documents
+        </h3>
+
+        <!-- UPLOAD -->
+        <div class="card mb-3 p-3">
+
+            <h5>Upload PDF</h5>
+
+            <InputFile OnChange="HandleFileUpload"
+                       accept=".pdf" />
+
+            @if (IsUploading)
+            {
+                <p class="mt-2">
+                    Uploading and processing PDF...
+                </p>
+            }
+
+            @if (!string.IsNullOrEmpty(UploadMessage))
+            {
+                <div class="alert alert-info mt-2">
+
+                    @UploadMessage
+
+                </div>
+            }
+
+        </div>
+
+        <div class="documents-sidebar">
+
+            <h4>Documents</h4>
+
+            @if (Document.Count == 0)
+            {
+                <p>No documents uploaded.</p>
+            }
+            else
+            {
+                @foreach (var doc in Document)
+                {
+                    <div class="document-card">
+
+                        <div class="document-title">
+                            📄 @doc.Filename
+                        </div>
+
+                        <div class="document-meta">
+                            Chunks: @doc.Chunks
+                        </div>
+
+                        <div class="document-meta">
+                            Uploaded:
+                            @FormatDate(doc.Uploaded_At)
+                        </div>
+
+                        <button class="delete-btn btn btn-danger"
+                                @onclick="() => DeleteDocument(doc.Document_Id)">
+                            Delete
+                        </button>
+
+                        <button class="preview-btn btn btn-secondary"
+                                @onclick="() => PreviewDocument(doc.Document_Id)">
+                            Preview Chunks
+                        </button>
+
+                        
+                    </div>
+                }
+
+                @if (PreviewChunks.Any())
+                {
+                    <div class="chunk-preview">
+
+                        <h3>Chunk Preview</h3>
+
+                        @foreach (var chunk in PreviewChunks)
+                        {
+                            <div class="chunk-card">
+
+                                <div class="chunk-header">
+                                    Page @chunk.Page
+                                    - Chunk @chunk.Chunk
+                                </div>
+
+                                <div class="chunk-content">
+                                    @chunk.Content
+                                </div>
+
+                            </div>
+                        }
+
+                    </div>
+                }
+
+            }
+
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+    private string UploadMessage = "";
+
+    private bool IsLoading = false;
+
+    private bool IsUploading = false;
+
+    private List<DocumentInfo> Document = new();
+
+    private List<ChunkInfo> PreviewChunks = new();
+
+    private string? SelectedDocumentId;
+
+    protected override async Task
+        OnInitializedAsync()
+    {
+
+        await LoadDocuments();
+    }
+
+   
+
+    private async Task HandleFileUpload(
+        InputFileChangeEventArgs e)
+    {
+        try
+        {
+            IsUploading = true;
+
+            UploadMessage = "";
+
+            var file = e.File;
+
+            var success =
+                await UploadService
+                    .UploadPdf(file);
+
+            if (success)
+            {
+                UploadMessage = "PDF uploaded successfully!";
+            }
+            else
+            {
+                UploadMessage = "Upload failed.";
+            }
+
+            await LoadDocuments();
+        }
+        catch (Exception ex)
+        {
+            UploadMessage =
+                $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsUploading = false;
+        }
+    }
+
+    private async Task LoadDocuments()
+    {
+        Document = await ApiService.GetDocuments();
+    }
+
+    private async Task DeleteDocument(string documentId)
+    {
+        await ApiService.DeleteDocument(documentId);
+
+        await LoadDocuments();
+    }
+
+    private string FormatDate(string value)
+    {
+        if (DateTime.TryParse(value, out var date))
+        {
+            return date.ToString("dd MMM yyyy HH:mm");
+        }
+
+        return value;
+    }
+
+    private async Task PreviewDocument(
+    string documentId)
+    {
+        SelectedDocumentId = documentId;
+
+        PreviewChunks = await ApiService
+            .GetChunks(documentId);
+    }
+}

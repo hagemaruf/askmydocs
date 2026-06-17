@@ -6,6 +6,8 @@ from app.services.pdf_service import extract_pages_from_pdf
 from app.rag.chunker import split_text
 from app.rag.embedding_service import create_embeddings
 from app.rag.chroma_service import add_documents
+from uuid import uuid4
+from datetime import datetime
 
 router = APIRouter()
 
@@ -42,6 +44,10 @@ async def upload_pdf(
 
     all_metadatas = []
 
+    document_id = str(uuid4())
+
+    uploaded_at = datetime.utcnow().isoformat()
+
     # Process each page
     for page_data in pages:
 
@@ -64,7 +70,9 @@ async def upload_pdf(
             all_metadatas.append({
                 "source": file.filename,
                 "page": page_number,
-                "chunk": i
+                "chunk": i,
+                "document_id": document_id,
+                "uploaded_at": uploaded_at
             })
 
     # Store in ChromaDB

@@ -9,6 +9,7 @@ namespace AskMyDocs.Web.Services;
 public class ApiService
 {
     private readonly HttpClient _httpClient;
+    private const string _baseUrl = "http://localhost:8000";
 
     public ApiService(HttpClient httpClient)
     {
@@ -41,7 +42,7 @@ public class ApiService
 
         var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "http://localhost:8000/chat");
+            $"{_baseUrl}/chat");
 
         request.Content = content;
 
@@ -77,7 +78,7 @@ public class ApiService
     public async Task<string> AskQuestion(string question)
     {
         var response = await _httpClient.PostAsJsonAsync(
-            "http://localhost:8000/chat",
+            $"{_baseUrl}/chat",
             new
             {
                 question = question
@@ -98,7 +99,7 @@ public class ApiService
     {
         var response =
             await _httpClient.PostAsJsonAsync(
-                "http://localhost:8000/generate-title",
+                $"{_baseUrl}/generate-title",
                 new
                 {
                     question = question
@@ -111,5 +112,27 @@ public class ApiService
 
         return result?.Title
             ?? "New Chat";
+    }
+
+    public async Task<List<DocumentInfo>> GetDocuments()
+    {
+        return await _httpClient.GetFromJsonAsync<List<DocumentInfo>>(
+            $"{_baseUrl}/documents"
+        ) ?? new();
+    }
+
+    public async Task DeleteDocument(string documentId)
+    {
+        await _httpClient.DeleteAsync(
+            $"{_baseUrl}/documents/{documentId}"
+        );
+    }
+
+    public async Task<List<ChunkInfo>> GetChunks(
+    string documentId)
+    {
+        return await _httpClient.GetFromJsonAsync<List<ChunkInfo>>(
+            $"{_baseUrl}/documents/{documentId}/chunks"
+        ) ?? new();
     }
 }

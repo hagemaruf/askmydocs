@@ -6,6 +6,7 @@ namespace AskMyDocs.Web.Services;
 public class UploadService
 {
     private readonly HttpClient _http;
+    private const string _baseUrl = "http://localhost:8000";
 
     public UploadService(HttpClient http)
     {
@@ -37,7 +38,7 @@ public class UploadService
 
         var response =
             await _http.PostAsync(
-                "http://localhost:8000/upload",
+                $"{_baseUrl}/upload",
                 content);
 
         return response.IsSuccessStatusCode;

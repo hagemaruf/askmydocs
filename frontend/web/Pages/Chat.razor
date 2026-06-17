@@ -49,35 +49,9 @@
     <div class="chat-area">
 
         <h3 class="mb-3">
-            AskMyDocs AI
+            AI Chat
         </h3>
-
-        <!-- UPLOAD -->
-        <div class="card mb-3 p-3">
-
-            <h5>Upload PDF</h5>
-
-            <InputFile OnChange="HandleFileUpload"
-                       accept=".pdf" />
-
-            @if (IsUploading)
-            {
-                <p class="mt-2">
-                    Uploading and processing PDF...
-                </p>
-            }
-
-            @if (!string.IsNullOrEmpty(UploadMessage))
-            {
-                <div class="alert alert-info mt-2">
-
-                    @UploadMessage
-
-                </div>
-            }
-
-        </div>
-
+        
         <!-- CHAT -->
         <div class="chat-container">
 
@@ -130,21 +104,15 @@
 
 </div>
 
-@code {
+            @code {
 
     private string Question = "";
 
     private bool IsLoading = false;
 
-    private bool IsUploading = false;
+    private List<Conversation> Conversations = new();
 
-    private string UploadMessage = "";
-
-    private List<Conversation>
-        Conversations = new();
-
-    private Conversation?
-        CurrentConversation;
+    private Conversation? CurrentConversation;
 
     protected override async Task
         OnInitializedAsync()
@@ -216,43 +184,6 @@
         }
 
         await SaveConversations();
-    }
-
-    private async Task HandleFileUpload(
-        InputFileChangeEventArgs e)
-    {
-        try
-        {
-            IsUploading = true;
-
-            UploadMessage = "";
-
-            var file = e.File;
-
-            var success =
-                await UploadService
-                    .UploadPdf(file);
-
-            if (success)
-            {
-                UploadMessage =
-                    "PDF uploaded successfully!";
-            }
-            else
-            {
-                UploadMessage =
-                    "Upload failed.";
-            }
-        }
-        catch (Exception ex)
-        {
-            UploadMessage =
-                $"Error: {ex.Message}";
-        }
-        finally
-        {
-            IsUploading = false;
-        }
     }
 
     private string GenerateConversationTitle(
@@ -341,4 +272,5 @@
 
         IsLoading = false;
     }
+
 }
