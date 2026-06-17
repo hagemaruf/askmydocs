@@ -19,27 +19,20 @@ AskMyDocs allows users to upload PDF documents and ask questions about their con
 ---
 
 ## Diagram
-+--------------------+
-|   Blazor WASM UI   |
-+---------+----------+
-          |
-          v
-+--------------------+
-|      FastAPI       |
-+---------+----------+
-          |
-          +-------------------+
-          |                   |
-          v                   v
-+----------------+   +----------------+
-| SentenceTrans. |   |     Ollama     |
-|   Embeddings   |   |    Llama 3.2   |
-+--------+-------+   +--------+-------+
-         |                    |
-         v                    |
-+----------------+            |
-|    ChromaDB    |<-----------+
-+----------------+
+```mermaid
+flowchart TD
+
+    A[Blazor WebAssembly] --> B[FastAPI Backend]
+
+    B --> C[SentenceTransformers]
+    C --> D[ChromaDB]
+
+    B --> E[Ollama Llama 3.2]
+
+    D --> B
+    B --> E
+    E --> A
+```
 
 ### Architecture
 
